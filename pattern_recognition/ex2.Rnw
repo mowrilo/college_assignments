@@ -1,0 +1,171 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+
+\title {Exercício 2 - Reconhecimento de Padrões}
+\author {Murilo Menezes - 2013030996}
+\date{Setembro de 2016}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+\paragraph{ }Neste exercício, será posta em prática a teoria da decisão Bayesiana. Esta técnica, como o próprio nome diz, provém da regra de Bayes, que afirma que $P(A|B)=P(B|A)*P(A)/P(B)$. Ou seja, se A for uma classe e B um conjunto de variáveis coletadas, temos que a probabilidade \textit{a posteriori} de termos uma determinada classe A dado que um conjunto B foi medido depende da probabilidade de que o dado medido seja desta classe, denominada verossimilhança, da probabilidade \textit{a priori} desta classe e de um fator $P(B)$ que significa a probabilidade de se medir este exato conjunto de dados.
+
+\paragraph{ }Para isto, foi usado um conjunto de dados chamado \textbf{iris}, que classifica três tipos de flores de acordo com o comprimento e largura de suas pétalas e sépalas. O conjunto possui 150 conjuntos de variáveis, sendo 50 para cada classe, e cada conjunto consiste de: largura da sépala, comprimento da sépala, largura da pétala e comprimento da pétala. Desta forma, se escolheu aleatoriamente 40 conjuntos para cada classe para se fazer o treinamento, ou seja, estimar as densidades de probabilidade de cada classe. Para cada classe, então, tirou-se a média e o desvio padrão, utilizando-os na função de densidade de probabilidade normal.
+
+\paragraph{ }Neste trabalho, ao aplicar-se a regra de Bayes, vemos que, como há o mesmo número de amostras para cada classe, as probabilidades \textit{a priori} são iguais, ou seja, $1/3$ para cada classe. As probabilidades de se medir cada tipo de dados também é considerada constante. Desta forma, a probabilidade \textit{a posteriori} dependerá apenas da verossimilhança, ou seja, para uma amostra de teste, a classe cuja função de densidade de probabilidade apresentar maior valor dentre as estimadas será a escolhida.
+
+\paragraph{ }Primeiramente, serão feitos testes com as próprias amostras de treinamento utilizadas para estimar as densidades. Deste teste, será feita uma \textbf{matriz de confusão}, que consiste em uma matriz que explicita os acertos e erros para cada classe, bem como quais classes foram confundidas.
+
+\paragraph{ }Depois, será feita a mesma coisa com as amostras de teste, não utilizadas ao estimar as densidades de probabilidade. Delas, será também tirada a matriz de confusão. 
+\pagebreak
+
+\paragraph{ }Abaixo, está a saída da função \textit{pairs(iris)}, que relaciona os atributos dois a dois, de todas as classes. Vemos que a classe 1 se destaca mais das outras em vários atributos, enquanto com as classes 2 e 3 há sobreposição.
+
+\begin{figure}[H]
+<<echo=FALSE,fig=TRUE>>=
+
+  library(plot3D)
+  rm(list=ls())
+  data("iris")
+  x<-as.matrix(iris[,(1:4)])
+  y<-matrix(as.numeric(iris[,5]), nrow=150)
+  pairs(iris)
+@
+\caption{Análise de todos os atributos das classes, dois a dois}
+\label{pairs}
+\end{figure}
+
+\paragraph{ }Abaixo, foram feitas as médias e desvios padrão de cada classe, estimando-se uma PDF normal de 4 dimensões. Em seguida, calculou-se a matriz de confusão para os grupos de treinamento e de teste. Repetindo-se este processo por 10 vezes, calculou-se a média de acertos desta técnica para o grupo de teste. Foram explicitadas as médias de acerto de cada classe, as matrizes de confusão para o último teste e a porcentagem global de acertos.
+
+<<echo=T,fig=F>>=
+
+  library(plot3D)
+  rm(list=ls())
+  data("iris")
+  x<-as.matrix(iris[,(1:4)])
+  y<-matrix(as.numeric(iris[,5]), nrow=150)
+  #pairs(iris)
+  
+  pdfnvar <- function(x,m,K,n) ((1/(sqrt((2*pi)^n*(det(K)))))*exp(-.5*(t(x-m) %*% (solve(K)) %*% (x-m))))
+  
+  train <- 40
+  test <- 50-train
+  
+  matAcertos<-matrix(nrow=10,ncol=3)
+  acertosGlobal<-c(0,0,0,0,0,0,0,0,0,0)
+  for (j in 1:10){
+    
+  xseq<- sample(50)
+  xtrainc1<-matrix(x[xseq[1:train],],nrow=train)
+  xtestc1<-x[xseq[(train+1):50],]
+  mediasc1<-matrix(colMeans(xtrainc1))
+  kc1<-cov(xtrainc1)
+  
+  xseq<- sample(50)+50
+  xtrainc2<-matrix(x[xseq[1:train],],nrow=train)
+  xtestc2<-x[xseq[(train+1):50],]
+  mediasc2<-matrix(colMeans(xtrainc2))
+  kc2<-cov(xtrainc2)
+  
+  xseq<- sample(50)+100
+  xtrainc3<-matrix(x[xseq[1:train],],nrow=train)
+  xtestc3<-x[xseq[(train+1):50],]
+  mediasc3<-matrix(colMeans(xtrainc3))
+  kc3<-cov(xtrainc3)
+
+    
+    pc<-c(0,0,0)
+    confusaotrain<-matrix(c(0,0,0,0,0,0,0,0,0),nrow=3, ncol=3)
+     for(i in (1:train)){
+        xtrain <- matrix(xtrainc1[i,])
+        pc[1]<-pdfnvar(xtrain,mediasc1,kc1,4)
+        pc[2]<-pdfnvar(xtrain,mediasc2,kc2,4)
+        pc[3]<-pdfnvar(xtrain,mediasc3,kc3,4)
+        index<-which.max(pc)
+        confusaotrain[1,index] <- confusaotrain[1,index] + 1
+     }
+      for(i in (1:train)){
+        xtrain <- matrix(xtrainc2[i,])
+        pc[1]<-pdfnvar(xtrain,mediasc1,kc1,4)
+        pc[2]<-pdfnvar(xtrain,mediasc2,kc2,4)
+        pc[3]<-pdfnvar(xtrain,mediasc3,kc3,4)
+        index<-which.max(pc)
+        confusaotrain[2,index] <- confusaotrain[2,index] + 1
+      }
+      for(i in (1:train)){
+        xtrain <- matrix(xtrainc3[i,])
+        pc[1]<-pdfnvar(xtrain,mediasc1,kc1,4)
+        pc[2]<-pdfnvar(xtrain,mediasc2,kc2,4)
+        pc[3]<-pdfnvar(xtrain,mediasc3,kc3,4)
+        index<-which.max(pc)
+        confusaotrain[3,index] <- confusaotrain[3,index] + 1
+      }
+  
+     pc<-c(0,0,0)
+     confusao<-matrix(c(0,0,0,0,0,0,0,0,0),nrow=3, ncol=3)
+     for(i in (1:test)){
+        xtest <- matrix(xtestc1[i,])
+        pc[1]<-pdfnvar(xtest,mediasc1,kc1,4)
+        pc[2]<-pdfnvar(xtest,mediasc2,kc2,4)
+        pc[3]<-pdfnvar(xtest,mediasc3,kc3,4)
+        index<-which.max(pc)
+        confusao[1,index] <- confusao[1,index] + 1
+     }
+      for(i in (1:test)){
+        xtest <- matrix(xtestc2[i,])
+        pc[1]<-pdfnvar(xtest,mediasc1,kc1,4)
+        pc[2]<-pdfnvar(xtest,mediasc2,kc2,4)
+        pc[3]<-pdfnvar(xtest,mediasc3,kc3,4)
+        index<-which.max(pc)
+        confusao[2,index] <- confusao[2,index] + 1
+      }
+      for(i in (1:test)){
+        xtest <- matrix(xtestc3[i,])
+        pc[1]<-pdfnvar(xtest,mediasc1,kc1,4)
+        pc[2]<-pdfnvar(xtest,mediasc2,kc2,4)
+        pc[3]<-pdfnvar(xtest,mediasc3,kc3,4)
+        index<-which.max(pc)
+        confusao[3,index] <- confusao[3,index] + 1
+      }
+     for(k in 1:3){
+       matAcertos[j,k] <- confusao[k,k]
+       acertosGlobal[j] <- acertosGlobal[j] + confusao[k,k]
+     }
+  }
+  
+  medAcertos <- numeric(length=3)
+  dpAcertos <- numeric(length=3)
+  
+  medGlobal <- mean(acertosGlobal)
+  dpGlobal <- sd(acertosGlobal)
+  
+  taxaGlobal <- (medGlobal/(3*test)) * 100
+  
+  for (i in 1:3)
+  {
+    medAcertos[i]<-mean(matAcertos[,i])
+    dpAcertos[i]<-sd(matAcertos[,i])
+  }
+  
+  print("Matriz de confusão com variáveis de treinamento")
+  print(confusaotrain)
+  
+  print("Matriz de confusão com variáveis de teste")
+  print(confusao)
+  
+  print("Média de acertos para cada classe")
+  print(medAcertos)
+  
+  print("Porcentagem global de acerto:")
+  print(taxaGlobal)
+  
+@
+
+\paragraph{ }Como podemos perceber, a porcentagem de acerto é alta. Como esperado, não houve confusão quanto à classe 1, uma vez que esta é discriminada mais facilmente. Com as classes 2 e 3 houve certa confusão, causada pela sobreposição de suas amostras. Porém, mesmo assim, os resultados foram satisfatórios.
+\end{document}

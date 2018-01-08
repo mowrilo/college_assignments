@@ -1,0 +1,242 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+
+\title{Exercício 1}
+\author{Murilo Vale Ferreira Menezes - 2013030996}
+\date{Agosto de 2016}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+% \tableofcontents
+\section{Geração de dados}
+Neste exercício, serão estudadas distribuições normais de 2 variáveis. Primeiramente, serão geradas duas funções normais bidimensionais, centradas em 2 e 4, respectivamente.
+<<echo=T,fig=F>>=
+rm(list=ls())
+library('plot3D')
+N <- 1000
+xc1 <- matrix(rnorm(N), ncol=2)*.35+2
+xc2 <- matrix(rnorm(N), ncol=2)*.35+4
+@
+Vemos que é utilizada a função rnorm para 1000 pontos em cada classe.
+Em seguida, as distribuições serão analisadas de acordo com a função característica de uma função densidade de probabilidade normal multivariada.
+\pagebreak
+
+Graficamente as distribuições ficarão:
+\begin{figure}[h]
+\centering
+<<echo=F,fig=T>>=
+N <- 1000
+xc1 <- matrix(rnorm(N), ncol=2)*.35+2
+xc2 <- matrix(rnorm(N), ncol=2)*.35+4
+plot(xc1[,1],xc1[,2],type='p',col='blue',xlim=c(0,6),ylim=c(0,6),xlab='',ylab='')
+par(new=T)
+plot(xc2[,1],xc2[,2],type='p',col='red',xlim=c(0,6),ylim=c(0,6),ylab='x2',xlab='x1')
+@
+\caption{Distribuições normais bivariadas}
+\end{figure}
+\pagebreak
+\section{Funções de densidade}
+Será usada a função característica de uma função densidade de probabilidade normal multivariada.
+Em seguida, calcula-se a média e o desvio padrão das distribuições geradas de modo a calcular, pela função gerada, a curva tridimensional de densidade.
+
+\begin{figure}
+<<echo=T,fig=TRUE>>=
+pdfnvar <- function(x,m,K,n) ((1/(sqrt((2*pi)^n*(det(K)))))*exp(-.5*(t(x-m) %*% (solve(K)) %*% (x-m)))) #é salva a fórmula da função densidade de probabilidade normal para N variáveis
+
+m11 <- mean(xc1[,1]) #média dos pontos das variáveis
+m12 <- mean(xc1[,2])
+m1<-matrix(c(m11,m12),ncol=1,nrow=2)
+
+k1<- matrix(c(sd(xc1[,1]),0,0,sd(xc1[,2])),nrow=2,ncol=2) #a matriz de covariância se torna uma matriz diagonal com os desvios padrão
+
+m21 <- mean(xc2[,1])
+m22 <- mean(xc2[,2])
+m2<-matrix(c(m21,m22),ncol=1,nrow=2)
+k2<- matrix(c(sd(xc2[,1]),0,0,sd(xc2[,2])),nrow=2,ncol=2)
+
+seqi <- seq(0,6,.1)
+seqj <- seq(0,6,.1)
+np<-length(seqi)
+
+M1 <- matrix(nrow=np,ncol=np)
+M2 <- matrix(nrow=np,ncol=np)
+
+ci<-0
+for(i in seqi){ #são calculados os valores das funções para cada classe
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+persp3D(seqi,seqj,M1,type='l')
+persp3D(seqi,seqj,M2,type='l', add=T)
+@
+\caption{Função de duas variáveis representando a densidade de pontos das classes}
+\end{figure}
+
+\begin{figure}
+<<echo=F,fig=T>>=
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Curvas de nível das funções tridimensionais}
+\end{figure}
+\pagebreak
+\section{Análise das covariâncias}
+Na seção anterior, as matrizes de covariância foram igualadas a matrizes diagonais com os desvios padrão, ou seja, covariâncias nulas. Agora, estas serão levadas em conta. É utilizada a função anterior para o cálculo da função densidade, mas fixando-se as médias em 3 e os desvios padrão em 1. 
+
+\begin{figure}
+<<echo=T,fig=T>>=
+m11 <- 3 #as médias são fixas em 3, de modo que as classes se sobreponham
+m12 <- 3
+m1<-matrix(c(m11,m12),ncol=1,nrow=2)
+
+k1<- matrix(c(1,0,0,1),ncol=2,nrow=2) #os desvios padrão, ou seja, os elementos da diagonal da matriz, têm valor 1. Neste caso, as covariâncias serão zero
+
+m21 <- 3
+m22 <- 3
+m2<-matrix(c(m21,m22),ncol=1,nrow=2)
+k2<- matrix(c(1,0,0,1),ncol=2,nrow=2)
+
+ci<-0
+for(i in seqi){
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Com as covariâncias nulas, as classes se sobrepõem}
+\end{figure}
+\pagebreak
+Começa-se a variar as covariâncias, de modo que, em uma classe, será variada positivamente, enquanto será variada negativamente na outra. A expectativa é que, com o aumento do módulo das covariâncias, as curvas tendam a se inclinar, bem como se achatarem, devido ao fato de tenderem a um sentido determinado com o crescimento das variáveis. Variando-se com sinais diferentes, as curvas devem se inclinar para sentidos diferentes, e, então se diferirem uma da outra. Variando-se primeiramente de 0.1, as curvas começam a se separar. Variando-se de 0.2, a diferença aumenta, e assim se segue até as covariâncias chegarem no valor de 1. Nesta situação, as curvas estarão inclinadas de modo a estarem a 90º uma da outra e achatadas de modo a se tornarem unidimensionais. Esta situação não pôde ser testada, porém, foram testados os valores +0.999 e -0.999.\linebreak 
+
+\begin{figure}
+<<echo=T,fig=T>>=
+k1<- matrix(c(1,0.1,0.1,1),ncol=2,nrow=2) 
+k2<- matrix(c(1,-0.1,-0.1,1),ncol=2,nrow=2)
+ci<-0
+for(i in seqi){
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Com covariâncias +0.1 e -0.1}
+\end{figure}
+
+\begin{figure}
+<<echo=F,fig=T>>=
+k1<- matrix(c(1,0.25,0.25,1),ncol=2,nrow=2) 
+k2<- matrix(c(1,-0.25,-0.25,1),ncol=2,nrow=2)
+ci<-0
+for(i in seqi){
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Com covariâncias +0.25 e -0.25}
+\end{figure}
+
+\begin{figure}
+<<echo=F,fig=T>>=
+k1<- matrix(c(1,0.5,0.5,1),ncol=2,nrow=2) 
+k2<- matrix(c(1,-0.5,-0.5,1),ncol=2,nrow=2)
+ci<-0
+for(i in seqi){
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Com covariâncias +0.5 e -0.5}
+\end{figure}
+
+\begin{figure}
+<<echo=F,fig=T>>=
+k1<- matrix(c(1,0.75,0.75,1),ncol=2,nrow=2) 
+k2<- matrix(c(1,-0.75,-0.75,1),ncol=2,nrow=2)
+ci<-0
+for(i in seqi){
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Com covariâncias +0.75 e -0.75}
+\end{figure}
+
+\begin{figure}
+<<echo=F,fig=T>>=
+
+k1<- matrix(c(1,0.999,0.999,1),ncol=2,nrow=2) 
+k2<- matrix(c(1,-0.999,-0.999,1),ncol=2,nrow=2)
+ci<-0
+for(i in seqi){
+  ci<-ci+1
+  cj<-0
+  for(j in seqj){
+    cj<-cj+1
+    xt<-matrix(c(i,j),nrow=2,ncol=1)
+    M1[ci,cj] <- pdfnvar(xt,m1,k1,2)
+    M2[ci,cj] <- pdfnvar(xt,m2,k2,2)
+  }
+}
+
+contour2D(M1,seqi,seqj)
+contour2D(M2,seqi,seqj,add=T)
+@
+\caption{Com covariâncias +0.999 e -0.999}
+\end{figure}
+
+\end{document}
+
+

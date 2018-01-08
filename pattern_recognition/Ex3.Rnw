@@ -1,0 +1,205 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+
+\title{Homework 4}
+\author{Murilo}
+\date{Setembro de 2016}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+<<echo=T,fig=T>>=
+  
+  rm(list=ls())
+library(MASS)
+library(mvtnorm)
+##################################################################
+mymixgauss <- function(x,inlist)
+{
+  pdfnvar <- function(x,m,K,n) ((1/(sqrt(abs((2*pi)^n*(det(K))))))*exp(-.5*(t(x-m) %*% (ginv(K)) %*% (x-m))))
+  
+  ng<-length(inlist)
+  klist<-list()
+  mlist<-list()
+  pglist<-list()
+  nglist<-list()
+  n<-dim(inlist[[1]])[2]
+  
+  for (i in (1:ng))
+  {
+    klist[[i]]<-cov(inlist[[i]])
+    mlist[[i]]<-colMeans(inlist[[i]])
+    nglist[[i]]<-dim(inlist[[i]])[1]
+  }
+  N<-0
+  for (i in (1:ng))
+  {
+    N<-N+nglist[[i]]
+  }
+  for (i in (1:ng))
+  {
+    pglist[[i]]<-nglist[[i]]/N
+  }
+  Px<-0
+  for (i in (1:ng))
+  {
+    if (nrow(inlist[[i]]) != 0){
+    if (det(klist[[i]]) == 0)
+    {
+      
+    }
+    else
+    {
+        Px<-Px+pglist[[i]]*dmvnorm(x,mean=mlist[[i]],sigma=klist[[i]])#pdfnvar(x,mlist[[i]],klist[[i]],n)
+    }}
+  }
+  return (Px)
+}
+
+
+##################################################################
+
+mykmedias<-function(X,k)
+{
+  
+  N<-dim(X)[1]
+  n<-dim(X)[2]
+  
+  mi<-sample(N)
+  
+  m <- matrix(nrow=k,ncol=n) 
+  m<-X[mi[1:k],] #matriz de dados sorteada
+  
+  d<-matrix(nrow=k,ncol=1) #matriz de distancias
+  c<-matrix(nrow=N,ncol=1) #matriz de clusters
+  
+  for (kk in (1:200))
+  {
+    for(i in (1:N))
+    {
+      xt<-as.matrix(X[i,])
+      for(j in (1:k))
+      {
+        d[j]<-sum((t(xt)-m[j,])^2)
+      }
+      c[i]<-which.min(d)
+    }
+    for(i in (1:k))
+    {
+      ici<-which(c[] == i)
+      ni <- length(ici)
+      acc<-matrix(0,nrow=1,ncol=n)
+      for(j in (1:ni))
+      {
+        if (ni != 0)
+        {
+          acc<-acc+t(as.matrix(X[ici[j],]))
+        }
+      }
+      m[i,]<-acc/ni
+    }
+  }
+  retlist<-list(m,c)
+  return(retlist)
+}
+
+@
+  
+  \section{clustering}
+
+<<echo=T,fig=T>>=
+library(mclust)
+  library(plot3D)
+library(rgl)
+library(mlbench)
+
+data(BreastCancer)
+summary(BreastCancer)
+X <- data.matrix(BreastCancer[,2:10])
+X[is.na(X)] <- 0
+trainY <- as.numeric(BreastCancer$Class)
+
+k<-10
+
+ici1<-which(trainY==1)
+ici2<-which(trainY==2)
+
+countgeral <- 0
+for (i in 1:10)
+{
+X1<-X[ici1,]
+sampx1 <- sample(nrow(X1))
+X1train <- X1[sampx1[1:(nrow(X1)-40)],]
+X1test <- X1[sampx1[(nrow(X1)-39):nrow(X1)],]
+
+X2<-X[ici2,]
+sampx2 <- sample(nrow(X2))
+X2train <- X2[sampx2[1:(nrow(X2)-40)],]
+X2test <- X2[sampx2[(nrow(X2)-39):nrow(X2)],]
+
+qwert<-kmeans(X1train,k)#mykmedias(X1train,k)
+qwery<-kmeans(X2train,k)#mykmedias(X2train,k)
+
+xc<-qwert[[1]]
+xc2<-qwery[[1]]
+xclusters1<-list()
+xclusters2<-list()
+
+for(i in (1:k))
+{
+  ind <- which(xc[] == i)
+  xclusters1[[i]]<-X1train[ind,]
+  
+   
+   ind2 <- which(xc2[] == i)
+   xclusters2[[i]]<-X2train[ind2,]
+}
+   pc1<-c(0,0)
+   count1 <- 0
+  for(i in (1:nrow(X1test)))
+    {
+
+        pc1[1]<-mymixgauss(X1test[i,],xclusters1)
+        pc1[2]<-mymixgauss(X1test[i,],xclusters2)
+        
+        index<-which.max(pc1)
+        if (index == 1)
+        {
+          count1 <- count1 + 1
+        }
+     }
+
+  eficacia1 <- count1/nrow(X1test)
+  
+  pc2<-c(0,0)
+  count2 <- 0
+  for(i in (1:nrow(X2test))){
+
+        pc2[1]<-mymixgauss(X2test[i,],xclusters1)
+        pc2[2]<-mymixgauss(X2test[i,],xclusters2)
+        
+        index<-which.max(pc2)
+        
+        if (index == 2)
+        {
+          count2 <- count2 + 1
+        }
+     }
+
+  eficacia2 <- count2/nrow(X2test)
+  
+  eficaciag <- (count1 + count2)/(nrow(X1test) + nrow(X2test))
+  countgeral <- countgeral + eficaciag
+}
+eficaciageral <- countgeral/10
+cat(sprintf("Acurácia geral: %f",eficaciageral))
+@
+  
+  \end{document}
