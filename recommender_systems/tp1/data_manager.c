@@ -9,7 +9,8 @@
 
 //float***
 void read_matrix(char* filename, int orientation){
-    printf("%s\n",filename);
+    int a = strlen(filename);
+    printf("Length: %d\n%s\n",a,filename);
    // FILE *f = fopen(filename,'r');
    // float*** = malloc(sizeof(float**));
 }

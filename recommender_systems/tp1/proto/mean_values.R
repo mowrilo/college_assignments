@@ -1,6 +1,6 @@
 library(dplyr)
 library(readr) 
-
+setwd("~/Documents/codes/materias/recommender_systems/tp1/data/")
 rat <- read_csv("split_ratings.csv")
 rat <- rat %>% select(-1)
 names(rat)[1:2] <- c("User","Item")
@@ -23,16 +23,17 @@ for (i in targ$`UserId:ItemId`){
     if (is.na(pred_itm)){
         pred_itm <- mn_itm
     }
-    dev_itm <- (pred_itm - mn_itm)/mn_itm
-    pred <- pred_usr + pred_usr*dev_itm
+    dev_usr <- (pred_usr - mn_usr)/mn_usr
+    pred <- pred_itm + sign(dev_usr)*.3
     if (pred > 10){pred <- 10}
+    # pred <- round(pred)
     preds <- c(preds,pred)
 }
 
-preds[which(preds > 10)] <- 10
+# preds[which(preds > 10)] <- 10
 
 a <- targ
 a$Prediction <- preds
 
-write.csv(a,"mean.csv",
+write.csv(a,"mean_item_dev.csv",
           row.names = F,quote = F)
