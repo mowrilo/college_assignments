@@ -14,6 +14,47 @@ double Predictor::calculate_norm(unordered_map<int,int> &rat){
     return sqrt(norm);
 }
 
+double Predictor::adjusted_cosine(ItemList &list, string item1, string item2){
+    unordered_map<int,int> ratings1 = list.get_itemratings(item1);
+    unordered_map<int,int> ratings2 = list.get_itemratings(item2);
+    unordered_map<int,int> unite = ratings1;
+    unite.insert(ratings2.begin(),ratings2.end());
+    double num = 0;
+
+    if (unite.size() != 0){
+        double general_average = list.general_avg();
+        double den1 = 0;
+        double den2 = 0;
+        double fill1 = list.get_item_avg(item1);
+        if (fill1 < 0)  fill1 = general_average;
+        double fill2 = list.get_item_avg(item2);
+        if (fill2 < 0)  fill2 = general_average;
+        for (unordered_map<int,int>::iterator it = unite.begin(); it != unite.end(); ++it){
+            string usr = list.get_username(it->first);
+            double avg = list.get_user_avg(usr);
+            unordered_map<int,int>::iterator it_item1 = ratings1.find(it->first);
+            double r1=fill1;
+            double r2=fill2;
+            if (it_item1 != ratings1.end()){
+                r1 = (double) it_item1->second;
+            }
+
+            unordered_map<int,int>::iterator it_item2 = ratings2.find(it->first);
+            if (it_item2 != ratings2.end()){
+                r2 = (double) it_item2->second;
+            }
+            den1 += (r1 - avg)*(r1 - avg);
+            den2 += (r2 - avg)*(r2 - avg);
+            num += (r1-avg)*(r2-avg);
+        }
+        num = num/(sqrt(den1)*sqrt(den2));
+        if (den1 == 0 || den2 == 0){
+            num = 0;
+        }
+    }
+    return num;
+}
+
 double Predictor::regular_cosine(unordered_map<int,int> &smaller, double norm1, unordered_map<int,int> &bigger, double norm2){
     double num = 0;
 
@@ -32,7 +73,7 @@ double Predictor::regular_cosine(unordered_map<int,int> &smaller, double norm1, 
     return num;
 }
 
-ItemList Predictor::predict_all(ItemList &first_list){
+void Predictor::predict_all(ItemList &first_list){
     ifstream f(file_to_predict);
     string line;
     string content ((std::istreambuf_iterator<char>(f)),
@@ -64,15 +105,10 @@ ItemList Predictor::predict_all(ItemList &first_list){
                 similars.insert({item,empty});
                 it_sim = similars.find(item);
             }
-            //cout << user  << "  "<< item << "\n";
-            //unordered_map<string,double> this_similars = similars.find(item)->second;
             set<string> this_users_list = first_list.get_user_list(user);
-            //cout << "this_users_list: " << this_users_list.size() <<"\n";
-            vector<pair<double, string> > similarities;
+            map<double,string,greater<double> > similarities;
             for (set<string>::iterator it = this_users_list.begin(); it != this_users_list.end(); it++){
                 unordered_map<string, unordered_map<string,double> >::iterator find_item = similars.find(*it);
-                //if (find_item != this_similars.end()){
-                //it_sim = similars.find(*it);
                 if (find_item == similars.end()){
                     unordered_map<string,double> empty;
                     similars.insert({*it,empty});
@@ -85,8 +121,6 @@ ItemList Predictor::predict_all(ItemList &first_list){
                 }
                 else{
 			        unordered_map<int,int> ratings2 = first_list.get_itemratings(*it);
-                //if (ratings2.size() > 0){
-                    // unordered_map<string,double>
 			        norm_it = norms.find(*it);
                     double norm2 = 0;
                     if (norm_it == norms.end()){
@@ -96,49 +130,30 @@ ItemList Predictor::predict_all(ItemList &first_list){
                     else{
                         norm2 = norm_it->second;
                     }
-                    //double sim = find_item->second;//sl.regular_cosine(first_list,item,*it);
-		            //double sim = 0;
-                       	if (norm1 > 0 && norm2 > 0){
-	                        // unordered_map<int,int> smaller;
-    	                    // unordered_map<int,int> bigger;
-  	                        if (ratings1.size() < ratings2.size()){
-  	                            sim = regular_cosine(ratings1, norm1, ratings2, norm2);
-  	                        }
-  	                        else{
-                                sim = regular_cosine(ratings2, norm1, ratings1, norm2);
- 	                        }
-	                        // //double sim = 0;
-	                        // //cout  << "smaller size: " << smaller.size() <<"\n";
-	                        // if (smaller.size() != 0){
-	                        //     for (unordered_map<int,int>::iterator it = smaller.begin(); it != smaller.end(); ++it){
-	                        //         unordered_map<int,int>::iterator it_big = bigger.find(it->first);
-	                        //         if (it_big != bigger.end()){
-	                        //             sim += ((double) it->second)*((double) it_big->second);
-	                        //         }
-	                        //     }
-	                        //     sim = sim/(norm1*norm2);
-	                        //     //if (norm1 == 0 || norm2 == 0){
-	                        //     //    sim = 0;
-	                        //     //}
-   	                        // }
+                    if (norm1 > 0 && norm2 > 0){
+                        if (ratings1.size() < ratings2.size()){
+                            sim = regular_cosine(ratings1, norm1, ratings2, norm2);
                         }
-                        it_sim->second.insert({*it,sim});
-                        find_item->second.insert({item,sim});
+  	                    else{
+                            sim = regular_cosine(ratings2, norm1, ratings1, norm2);
+                        }
                     }
-                    pair<double,string> par(sim,*it);
-                    similarities.push_back(par);
-                //}
-                //cout << "sim to: " << *it << " Sim val: " << sim.first << "\n";
-            //}
+                    it_sim->second.insert({*it,sim});
+                    find_item->second.insert({item,sim});
+                }
+                // pair<double,string> par(sim,*it);
+                similarities.insert({sim,*it});
             }
-            sort(similarities.rbegin(),similarities.rend());
-            if (similarities.size() > k){
-                vector<pair<double,string> > newvec(similarities.begin(),(similarities.begin() + k));
-                similarities = newvec;
-            }
-            //cout << "sim size: " << similarities.size() <<"\n";
+            // sort(similarities.rbegin(),similarities.rend());
+            // if (similarities.size() > k){
+            //     vector<pair<double,string> > newvec(similarities.begin(),(similarities.begin() + k));
+            //     similarities = newvec;
+            // }
             double num = 0, den = 0;
-            for (vector<pair<double, string> >::iterator it = similarities.begin(); it != similarities.end(); ++it){
+            int count = 0;
+            map<double, string>::iterator it = similarities.begin();
+            //for (map<double, string>::iterator it = similarities.begin(); it != similarities.end(); ++it){
+            while((count < k) && (it != similarities.end())){
                 int user_id = first_list.get_userid(user);
                 unordered_map<int,int> itemratings = first_list.get_itemratings(it->second);
                 unordered_map<int,int>::iterator item_it = itemratings.find(user_id);
@@ -147,6 +162,8 @@ ItemList Predictor::predict_all(ItemList &first_list){
                 //cout << "user avg: " << avg  << " sim: " << it->first << " Rating: " << rat << " user_id: " << user_id << "\n";
                 num += (((double) rat) - avg)* it->first;
                 den += abs(it->first);
+                count++;
+                it++;
             }
             double this_avg = first_list.get_item_avg(item);
             if (this_avg < 0){
@@ -175,6 +192,6 @@ ItemList Predictor::predict_all(ItemList &first_list){
         f.close();
     }
     cout << oss.str();
-    ItemList novo;
-    return novo;
+    // ItemList novo;
+    // return novo;
 }

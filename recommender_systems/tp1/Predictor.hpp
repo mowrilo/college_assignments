@@ -5,13 +5,15 @@
 #include <algorithm>
 #include <sstream>
 #include <unordered_set>
+#include <functional>
 
 using namespace std;
 
 class Predictor{
     public:
         Predictor(string filename);
-        ItemList predict_all(ItemList &first_list);
+        void predict_all(ItemList &first_list);
+        double adjusted_cosine(ItemList &list, string item1, string item2);
         double regular_cosine(unordered_map<int,int> &ratings1, double norm1, unordered_map<int,int> &ratings2, double norm2);
         double calculate_norm(unordered_map<int,int> &rat);
     private:
