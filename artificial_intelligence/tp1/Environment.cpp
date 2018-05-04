@@ -1,6 +1,8 @@
 #include "Environment.hpp"
 
-Environment::Environment(string &file_name){
+Environment::Environment(){}
+
+void Environment::make_env(string &file_name){
     ifstream f(file_name);
     string line;
     getline(f,line); //Reads map type (ignored)
@@ -31,8 +33,8 @@ pair<int,int> Environment::convert_coordinates(int position){
     return {x,y};
 }
 
-char Environment::query_state(int position){
-    pair<int,int> coordinates = convert_coordinates(position);
+char Environment::query_state(pair<int,int> coordinates){
+  //  pair<int,int> coordinates = convert_coordinates(position);
     int x = coordinates.first;
     int y = coordinates.second;
 
@@ -51,6 +53,33 @@ int Environment::get_dimension(string &line){
     int space = line.find(" ");
     string dim = line.substr(space+1);
     return stoi(dim);
+}
+
+int Environment::get_height(){
+    return this->height;
+}
+
+int Environment::get_width(){
+    return this->width;
+}
+
+void Environment::print_path(stack<State> &stack){
+    //cout << "Stack size: " << stack.size() << "\n";
+
+    //for (int i=0; i<stack.size(); i++){
+    while(!stack.empty()){
+        State a = stack.top();
+        stack.pop();
+        pair<int,int> coo = a.get_coordinates();
+        //cout << "i: " << i << " Coords: " << coo.first << "\t" << coo.second << "\n";
+        grid[coo.first][coo.second] = '1';
+    }
+    for (int i=0; i<height; i++){
+        for (int j=0; j<width; j++){
+            cout << grid[i][j];
+        }
+        cout << "\n";
+    }
 }
 
 Environment::~Environment(){
