@@ -10,6 +10,8 @@
 #include "Environment.hpp"
 #include "State.hpp"
 
+#define INT_MAX 2147483647
+
 using namespace std;
 
 class Agent{
@@ -24,7 +26,10 @@ class Agent{
         int get_state_number(pair<int,int> &s);
         //void set_env(Environment env);
         double get_heuristic(State &s);
-        void search();
+        // search returns -1 if goal is found; returns the max depth reached otherwise
+        int search(int max_depth);
+        void forget_all();
+        void start_search();
         double get_distance(State &a, State &b);
     private:
         // which type of search, according to the input

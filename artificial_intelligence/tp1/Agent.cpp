@@ -174,27 +174,40 @@ double Agent::get_distance(State &a, State &b){
     return dist;
 }
 
-void Agent::search(){
+int Agent::search(int max_depth){
     State current(this->init, {-1,-1}, 0);
+    int depth_reached = 0;
     bool queue_empty = false;
+    bool reached_max_depth = false;
     pair<int,int> current_coords = current.get_coordinates();
     while (current_coords != this->goal){
-        pair<int,int> found_goal = expand_state(current);//expand current;
-        if (found_goal.first >= 0){//depending on the algorithm, stop if generates goal;
-            if (this->policy %2 == 1){
-                State new_goal(found_goal,current.get_coordinates(),current.get_depth()+1);
-                current = new_goal;
-                break;
+        //cout << "current depth: " << current.get_depth() << "\n";
+        if (current.get_depth() < max_depth){
+            pair<int,int> found_goal = expand_state(current);//expand current;
+            if (found_goal.first >= 0){//depending on the algorithm, stop if generates goal;
+                if (this->policy %2 == 1){
+                    State new_goal(found_goal,current.get_coordinates(),current.get_depth()+1);
+                    current = new_goal;
+                    break;
+                }
             }
         }
+        //else{
+            //cout << "aqui carai\n\n";
+            //queue.pop();
+        //}
+
         if (queue.empty()){
             queue_empty = true;
-            break;
+            return depth_reached;
         }//check queue empty;
         current = state_to_expand();
         current_coords = current.get_coordinates();
+        if (current.get_depth() > depth_reached){
+            depth_reached = current.get_depth();
+        }
     }
-    if (!queue_empty){
+    //if (!queue_empty){
         cout << "Found the goal!!\n";
         stack<State> path = traceback(current);
         //for (int i=0; i<path.size(); i++){
@@ -204,9 +217,42 @@ void Agent::search(){
         //    cout << coo.first << "\t" << coo.second << "\n";
         //}
         env.print_path(path);
+        return -1;
+    //}
+    //else{
+    //    cout << "The goal was not found!!!\n";
+    //}
+}
+
+void Agent::forget_all(){
+    visited_states.clear();
+    frontier_costs.clear();
+    priority_queue<State, deque<State> > empty_queue;
+    queue = empty_queue;
+}
+
+void Agent::start_search(){
+    int result = 1;
+    if (this->policy == 1){// if IDS
+        int depth = 1;
+        bool no_improve = false;
+        //cout << "cvfdasfa";
+        while ((result > 0) && (!no_improve)){
+            //cout << "Searching with depth " << depth <<"\n";
+            forget_all();
+            result = search(depth);
+            if (result < depth){ // if the max depth reached is lower than the limit
+                no_improve = true;
+            }
+            depth++;
+        }
     }
     else{
-        cout << "The goal was not found!!!\n";
+        result = search(INT_MAX);
+        //cout << "max depth: " << result << "\n";
+        if (result > 0){
+            cout << "Did not find the node!!\n";
+        }
     }
 }
 
