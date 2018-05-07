@@ -71,7 +71,7 @@ void Environment::print_path(stack<State> &stack){
         State a = stack.top();
         stack.pop();
         pair<int,int> coo = a.get_coordinates();
-        //cout << "i: " << i << " Coords: " << coo.first << "\t" << coo.second << "\n";
+        cout << "<" << coo.first << ", " << coo.second << ", " << a.get_cost() << "> ";
         grid[coo.first][coo.second] = '1';
     }
     for (int i=0; i<height; i++){

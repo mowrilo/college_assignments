@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include "Environment.hpp"
+#include "StateHeap.hpp"
 #include "State.hpp"
 
 #define INT_MAX 2147483647
@@ -44,7 +45,8 @@ class Agent{
         // be implemented using a priority queue
         // The stack can be implemented using the 
         // depth of the node as weight.
-        priority_queue<State, deque<State> > queue;
+        //priority_queue<State, deque<State> > queue;
+        StateHeap queue;
         unordered_map<int,State> visited_states;
         unordered_map<int,double> frontier_costs;
         pair<int,int> init;

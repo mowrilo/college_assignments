@@ -56,7 +56,7 @@ double Agent::get_heuristic(State &s){
 
 double Agent::calculate_weight(State &a){
     if (this->policy == 1){
-        return a.get_depth();
+        return -a.get_depth();
     }
     else if (this->policy == 2){
         // cost is the cost of getting to the parent +
@@ -74,12 +74,13 @@ double Agent::calculate_weight(State &a){
     else if (this->policy == 4){
         // parent weight - parent heuristic + 
         // distance(this,parent) + this heuristic
-        pair<int,int> parent_coord = a.get_parent();
-        int parent_number = get_state_number(parent_coord);
-        State parent_state = visited_states.find(parent_number)->second;
+        //pair<int,int> parent_coord = a.get_parent();
+        //int parent_number = get_state_number(parent_coord);
+        //State parent_state = visited_states.find(parent_number)->second;
         //cout << "aqui\n";
-        double this_weight = parent_state.get_weight() - get_heuristic(parent_state);
-        this_weight += get_distance(a, parent_state) + get_heuristic(a);
+        //double this_weight = parent_state.get_weight() - get_heuristic(parent_state);
+        //this_weight += get_distance(a, parent_state) + get_heuristic(a);
+        double this_weight = a.get_cost() + get_heuristic(a);
         return this_weight;
     }
 
@@ -97,6 +98,7 @@ State Agent::state_to_expand(){
 // node in the closed list.
 pair<int,int> Agent::expand_state(State &a){
     pair<int,int> coords = a.get_coordinates();
+    //cout << "Expanding state " << coords.first << " " << coords.second << "\tWeight: " << a.get_weight() << "\n";
     int this_numb = get_state_number(coords);
     //cout << "expanded " << coords.first << "\t" << coords.second << "\n";
     visited_states.insert({this_numb,a});
@@ -114,15 +116,35 @@ pair<int,int> Agent::expand_state(State &a){
         if ((pos == '.') && (it_hash == visited_states.end())){
             //cout << "AEEE\n";
             unordered_map<int,double>::iterator it_front = frontier_costs.find(numb);
-            State new_state(*it, coords, a.get_depth() + 1); 
+            pair<int,int> coords_2 = *it;
+            double dist = abs(coords_2.first - coords.first) + abs(coords_2.second - coords.second);
+            if (dist == 2)  dist = 1.5;
+            State new_state(*it, coords, a.get_depth() + 1,a.get_cost()+dist); 
             double new_weight = calculate_weight(new_state);
+            //if (coords_2.first == 29 && coords_2.second == 29){
+                //cout << "Found the state with weight " << new_weight << " coming from " << coords.first << " " << coords.second << "\n";
+            //}
             new_state.set_weight(new_weight);
             if (it_front == frontier_costs.end()){
-                queue.push(new_state);
-                frontier_costs.insert({numb,new_weight});
+                //if (it_hash == visited_states.end()){
+                    queue.push(new_state);
+                    frontier_costs.insert({numb,new_weight});
+                //}
             }
             else{
                 if (new_weight < it_front->second){
+                    //if (coords_2.first == 29 && coords_2.second == 29){
+                        //cout << "substituiu!!\n\n";
+                    //}
+                    //if (it_hash != visited_states.end()){// change parent
+                    //    it_hash->second = new_state;
+                    //}
+                    //else{
+                    if (this->policy % 2 == 0){
+                        queue.change_state(new_state);
+                    }
+                    //}
+                    it_front->second = new_weight;
 //                    substitute_frontier(new_state);
                 }
             }
@@ -143,7 +165,16 @@ vector<pair<int,int> > Agent::get_neighbors(pair<int,int> &coords){
         for (int j = -1; j<2; j++){ // and so do j, to calculate the surrounding states
             if (j!=0 || i!=0){
                 if (env.query_state({coords.first+i,coords.second+j}) == '.'){//(coords.first < height) && (coords.first >= 0) && (coords.second < width) && (coords.second >= 0)){
-                    neighbors.push_back({coords.first+i,coords.second+j});
+                    if (i != 0 && j != 0){
+                        char diag1 = env.query_state({coords.first+i,coords.second});
+                        char diag2 = env.query_state({coords.first,coords.second+j});
+                        if (diag1 == '.' && diag2 == '.'){
+                            neighbors.push_back({coords.first+i,coords.second+j});
+                        }
+                    }
+                    else{
+                        neighbors.push_back({coords.first+i,coords.second+j});
+                    }
                 }
             }
         }
@@ -175,7 +206,7 @@ double Agent::get_distance(State &a, State &b){
 }
 
 int Agent::search(int max_depth){
-    State current(this->init, {-1,-1}, 0);
+    State current(this->init, {-1,-1}, 0, 0);
     int depth_reached = 0;
     bool queue_empty = false;
     bool reached_max_depth = false;
@@ -186,16 +217,13 @@ int Agent::search(int max_depth){
             pair<int,int> found_goal = expand_state(current);//expand current;
             if (found_goal.first >= 0){//depending on the algorithm, stop if generates goal;
                 if (this->policy %2 == 1){
-                    State new_goal(found_goal,current.get_coordinates(),current.get_depth()+1);
+                    double dist = abs(current_coords.first - found_goal.first) + abs(current_coords.second - found_goal.second);
+                    State new_goal(found_goal,current.get_coordinates(),current.get_depth()+1, current.get_cost() + dist);
                     current = new_goal;
                     break;
                 }
             }
         }
-        //else{
-            //cout << "aqui carai\n\n";
-            //queue.pop();
-        //}
 
         if (queue.empty()){
             queue_empty = true;
@@ -208,14 +236,20 @@ int Agent::search(int max_depth){
         }
     }
     //if (!queue_empty){
-        cout << "Found the goal!!\n";
+        //cout << "Found the goal!!\n";
+        //cout << "Total cost: " << current.get_cost() << "\n";
         stack<State> path = traceback(current);
+        pair<int,int> goal_coords = current.get_coordinates();
+        cout << "<" << init.first << ", " << init.second << ", 0>\n";
+        cout << "<" << goal_coords.first << ", " << goal_coords.second << ", " << current.get_cost() << ">\n\n";
+        
         //for (int i=0; i<path.size(); i++){
         //    State st = path.top();
         //    path.pop();
         //    pair<int,int> coo = st.get_coordinates();
         //    cout << coo.first << "\t" << coo.second << "\n";
         //}
+        //State gl = path.top();
         env.print_path(path);
         return -1;
     //}
@@ -227,7 +261,8 @@ int Agent::search(int max_depth){
 void Agent::forget_all(){
     visited_states.clear();
     frontier_costs.clear();
-    priority_queue<State, deque<State> > empty_queue;
+    //priority_queue<State, deque<State> > empty_queue;
+    StateHeap empty_queue;
     queue = empty_queue;
 }
 
@@ -241,8 +276,10 @@ void Agent::start_search(){
             //cout << "Searching with depth " << depth <<"\n";
             forget_all();
             result = search(depth);
-            if (result < depth){ // if the max depth reached is lower than the limit
+            if ((result < depth) && (result > 0)){ // if the max depth reached is lower than the limit
                 no_improve = true;
+                cout << "<" << init.first << ", " << init.second << ", 0>\n";
+                cout << "<" << goal.first << ", " << goal.second << ", inf>";
             }
             depth++;
         }
@@ -251,7 +288,8 @@ void Agent::start_search(){
         result = search(INT_MAX);
         //cout << "max depth: " << result << "\n";
         if (result > 0){
-            cout << "Did not find the node!!\n";
+            cout << "<" << init.first << ", " << init.second << ", 0>\n";
+            cout << "<" << goal.first << ", " << goal.second << ", inf>";
         }
     }
 }

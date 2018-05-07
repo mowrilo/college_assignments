@@ -1,6 +1,8 @@
 #ifndef HEAP_STRUC
 #define HEAP_STRUC
 
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "State.hpp"
@@ -14,12 +16,13 @@ class StateHeap{
         void pop();
         State top();
         void change_state(State s);
+        bool empty();
     
-    protected:
-        void min_heapify();
-        int left(int pos);
-        int right(int pos);
-        int parent(int pos);
+    //protected:
+    //    void min_heapify();
+    //    int left(int pos);
+    //    int right(int pos);
+    //    int parent(int pos);
     
     private:
         vector<State> vec;
