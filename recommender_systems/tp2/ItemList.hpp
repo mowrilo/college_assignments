@@ -8,21 +8,45 @@
 // director: not using... (too many)
 // language: one-hot
 // country: one-hot
+//
+// 1. reads each line, parses and stores
+// 2. reads the users into the user list
+// 3. 
 
 #ifndef ITEM_LIST
 #define ITEM_LIST
 
+#include <iostream>
+#include <map>
+#include <string>
+#include <sstream>
+#include <unordered_map>
+#include <vector>
 
+#include "rapidjson/document.h"
+
+using namespace std;
+using namespace rapidjson;
 
 class ItemList{
     public:
         ItemList();
-        int get_itemnumber(string &item_name);
+        int get_item_number(string &item_name);
         vector<double> get_vector(string &item_name);
+        // parses the item's json and saves in its content hash
+        void parse_item(string &item_json);
+        vector<double> compute_vector(string &item_name);
+        bool has_value(string &field, string &value);
+        void add_value(string &field, string &value);
+        vector<double> get_user_vector(vector<pair<int,int> > ratings);
+        void read_csv(string &filename);
     private:
         // maps the item's name to its json structure
         unordered_map<int, Document> contents;
         map<string, int> genre_n;
+        // maps a field of the features to its possible values
+        // (one hot encoding)
+        unordered_map<string, vector<string> > possible_values;
         // maps the item to its vector of features
         unordered_map<int, vector<double> > features;
 };
