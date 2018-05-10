@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -32,21 +33,24 @@ class ItemList{
     public:
         ItemList();
         int get_item_number(string &item_name);
+        double parse_double(string &value);
         vector<double> get_vector(string &item_name);
         // parses the item's json and saves in its content hash
         void parse_item(string &item_json);
         vector<double> compute_vector(string &item_name);
+        void put_possible_values(vector<string> values, string &field);
         bool has_value(string &field, string &value);
         void add_value(string &field, string &value);
         vector<double> get_user_vector(vector<pair<int,int> > ratings);
         void read_csv(string &filename);
-    private:
+        vector<string> split_comma(string &all);
+        vector<double> get_onehot(string &field, string &value);    private:
         // maps the item's name to its json structure
         unordered_map<int, Document> contents;
         map<string, int> genre_n;
         // maps a field of the features to its possible values
         // (one hot encoding)
-        unordered_map<string, vector<string> > possible_values;
+        unordered_map<string, set<string> > possible_values;
         // maps the item to its vector of features
         unordered_map<int, vector<double> > features;
 };
