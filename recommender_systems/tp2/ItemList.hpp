@@ -39,11 +39,11 @@ class ItemList{
         void parse_item(string &item_json);
         vector<double> compute_vector(string &item_name);
         void put_possible_values(vector<string> values, string &field);
-        bool has_value(string &field, string &value);
-        void add_value(string &field, string &value);
+        //bool has_value(string &field, string &value);
+        //void add_value(string &field, string &value);
         vector<double> get_user_vector(vector<pair<int,int> > ratings);
         void read_csv(string &filename);
-        vector<string> split_comma(string &all);
+        vector<string> split_comma(string all);
         vector<double> get_onehot(string &field, string &value);    private:
         // maps the item's name to its json structure
         unordered_map<int, Document> contents;

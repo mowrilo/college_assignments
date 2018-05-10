@@ -1,11 +1,11 @@
 #include "ItemList.hpp"
 
 ItemList::ItemList(){
-    vector<string> empty;
+    set<string> empty;
     string test = "Genre";
     possible_values.insert({test, empty});
-//    possible_values.insert({"Language", empty});
-//    possible_values.insert({"Country", empty});
+    possible_values.insert({"Language", empty});
+    possible_values.insert({"Country", empty});
 }
 
 // there are 7 characters of numbers
@@ -21,44 +21,49 @@ vector<double> ItemList::get_vector(string &item_name){
 
 }
 
-//void ItemList::parse_item(string &item_json){
-//    //cout << "snvsdnfsdiuofsn\n\n" << item_json << "\n\n\n\n";
-//    string item_name = item_json.substr(0,8);
-//    //cout << "item name:\n\n" << item_name << "\n\n";
-//    int item_n = get_item_number(item_name);
-//    item_json.erase(0,9);
-//    //cout << "Item number: " << item_n << " \n Item JSON: " << item_json << "\n";
-//    Document doc;
-//    //const char* item_c_str = item_json.c_str();
-//    doc.Parse(item_json.c_str());// parse a DOM tree
-//    //Value& s = doc["Year"];
-//    //string yr = s.GetString();
-//    //cout << "\n\nYear: " << yr << "\n";
-//    unordered_map<int, Document>::iterator it = contents.find(item_n);
-//    if (it != contents.end()){
-//        contents.insert({item_n, doc});
-//    }
-//    //unordered_map<string, set<string> >::iterator it_pos = possible_values.find("Genre");
-//    for (unordered_map<string,set<string> >::iterator it_pos = possible_values.begin(); it_pos != possible_values.end(); it_pos++){
-//        if (it_pos->first.compare("Genre")){
-//            Value& s = doc["Genre"];
-//            //string val = s.GetString();
-//            vector<string> values = split_comma(s.GetString());
-//            put_possible_values(values, "Genre");
-//        }
-//        else if (it_pos->first.compare("Language")){
-//            Value& s = doc["Language"];
-//            vector<string> values = split_comma(s.GetString());
-//            put_possible_values(values, "Language");
-//        }
-//        else if (it_pos->first.compare("Country")){
-//        Value& s = doc["Country"];
-//            vector<string> values = split_comma(s.GetString());
-//            put_possible_values(values, "Country");
-//        }
-//    }
-//}
-//
+void ItemList::parse_item(string &item_json){
+    //cout << "snvsdnfsdiuofsn\n\n" << item_json << "\n\n\n\n";
+    string item_name = item_json.substr(0,8);
+    //cout << "item name:\n\n" << item_name << "\n\n";
+    int item_n = get_item_number(item_name);
+    item_json.erase(0,9);
+    //cout << "Item number: " << item_n << " \n Item JSON: " << item_json << "\n";
+    Document doc;
+    //const char* item_c_str = item_json.c_str();
+    doc.Parse(item_json.c_str());// parse a DOM tree
+    //Value& s = doc["Year"];
+    //string yr = s.GetString();
+    //cout << "\n\nYear: " << yr << "\n";
+    //unordered_map<int, Document>::iterator it = contents.find(item_n);
+    //if (it != contents.end()){
+    //    contents.insert({item_n, doc});
+    //}
+    //unordered_map<string, set<string> >::iterator it_pos = possible_values.find("Genre");
+    for (unordered_map<string,set<string> >::iterator it_pos = possible_values.begin(); it_pos != possible_values.end(); it_pos++){
+        if (it_pos->first.compare("Genre")){
+            Value& s = doc["Genre"];
+            string str = s.GetString();
+            vector<string> values = split_comma(str);
+            string genro("Genre");
+            put_possible_values(values, genro);
+        }
+        else if (it_pos->first.compare("Language")){
+            Value& s = doc["Language"];
+            string str = s.GetString();
+            vector<string> values = split_comma(str);
+            string lang("Language");
+            put_possible_values(values, lang);
+        }
+        else if (it_pos->first.compare("Country")){
+            Value& s = doc["Country"];
+            string str = s.GetString();
+            vector<string> values = split_comma(str);
+            string count("Country");
+            put_possible_values(values, count);
+        }
+    }
+}
+
 //// gets the item number, retrieves its doc and builds 
 //// its feature vector. concatenates the one-hot vectors
 //// starting with the greatest. if the vector is already
@@ -98,7 +103,7 @@ void ItemList::put_possible_values(vector<string> values, string &field){
     }
 }
 
-vector<string> ItemList::split_comma(string &all){
+vector<string> ItemList::split_comma(string all){
     int this_pos = 0;
     int comma_pos = 0;
     //cout << "String all: "<<all << "\n";
