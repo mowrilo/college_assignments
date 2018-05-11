@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <map>
+#include <new>
 #include <set>
 #include <string>
 #include <sstream>
@@ -33,7 +34,7 @@ class ItemList{
     public:
         ItemList();
         int get_item_number(string &item_name);
-        double parse_double(string &value);
+        double parse_double(string value);
         vector<double> get_vector(string &item_name);
         // parses the item's json and saves in its content hash
         void parse_item(string &item_json);
@@ -44,9 +45,11 @@ class ItemList{
         vector<double> get_user_vector(vector<pair<int,int> > ratings);
         void read_csv(string &filename);
         vector<string> split_comma(string all);
-        vector<double> get_onehot(string &field, string &value);    private:
+        vector<double> get_onehot(string field, string value);    
+        ~ItemList();
+    private:
         // maps the item's name to its json structure
-        unordered_map<int, Document> contents;
+        unordered_map<int, Document*> contents;
         map<string, int> genre_n;
         // maps a field of the features to its possible values
         // (one hot encoding)
