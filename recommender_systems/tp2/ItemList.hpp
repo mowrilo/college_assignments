@@ -44,7 +44,6 @@ class ItemList{
         void put_possible_values(vector<string> values, string &field);
         //bool has_value(string &field, string &value);
         //void add_value(string &field, string &value);
-        vector<double> get_user_vector(vector<pair<int,int> > ratings);
         void read_contents(string &filename);
         vector<string> split_comma(string &all);
         vector<double> get_onehot(string field, string value);    
