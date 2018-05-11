@@ -3,6 +3,7 @@
 
 #include "rapidjson/document.h"
 #include "ItemList.hpp"
+#include "UserList.hpp"
 
 using namespace std;
 using namespace rapidjson;
@@ -11,7 +12,13 @@ int main(){
     ios::sync_with_stdio(false);
     ItemList list;
     string filename = "data/content.csv";
-    list.read_contents(filename);
+    //list.read_contents(filename);
+    //
+    string filename2 = "data/ratings.csv";
+    UserList ulist;
+    ulist.read_ratings(filename2);
+    //
+    //
     //string all = "English, French, German, Portuguese";
     //vector<string> asdasd =  list.split_comma(all);
     //string asd("i0001234");

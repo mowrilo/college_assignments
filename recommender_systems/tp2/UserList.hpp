@@ -1,9 +1,13 @@
 #ifndef USER_LIST
 #define USER_LIST
 
+#include <fstream>
+#include <iostream>
 #include <unordered_map>
 #include <utility>
+#include <sstream>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -12,7 +16,7 @@ class UserList{
         UserList();
         int get_user_number(string &username);
         void add_rating(string &username, int item_n, int rating);
-        vector<double> get_uservec(string &username, vector<double> vector);
+        //vector<double> get_uservec(string &username, vector<double> vector);
         //vector<double> get_user_vector(vector<pair<int,int> > ratings);
         void read_ratings(string &filename);
     private:
@@ -21,7 +25,7 @@ class UserList{
         // user vectors
         unordered_map<int, vector<double> > user_vecs;
         // mean rating of each item
-        unordered_map<int, pair<int,int> > item_avgs;
+        // unordered_map<int, pair<int,int> > item_avgs;
 };
 
 #endif
