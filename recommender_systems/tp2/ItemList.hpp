@@ -16,11 +16,12 @@
 #ifndef ITEM_LIST
 #define ITEM_LIST
 
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <new>
 #include <set>
-#include <shared_ptr>
+#include <memory>
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -44,14 +45,21 @@ class ItemList{
         //bool has_value(string &field, string &value);
         //void add_value(string &field, string &value);
         vector<double> get_user_vector(vector<pair<int,int> > ratings);
-        void read_csv(string &filename);
-        vector<string> split_comma(string all);
+        void read_contents(string &filename);
+        vector<string> split_comma(string &all);
         vector<double> get_onehot(string field, string value);    
-        ~ItemList();
+        void get_vector_names();
+        //~ItemList();
     private:
         // maps the item's name to its json structure
         unordered_map<int, shared_ptr<Document> > contents;
-        map<string, int> genre_n;
+        unordered_map<string, int> genre_n;
+        unordered_map<string, int> language_n;
+        unordered_map<string, int> country_n;
+        int n_positions;
+        map<string, int> value_to_position;
+        int max_yr;
+        int min_yr;
         // maps a field of the features to its possible values
         // (one hot encoding)
         unordered_map<string, set<string> > possible_values;
