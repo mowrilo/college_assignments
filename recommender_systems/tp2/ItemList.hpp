@@ -20,6 +20,7 @@
 #include <map>
 #include <new>
 #include <set>
+#include <shared_ptr>
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -49,7 +50,7 @@ class ItemList{
         ~ItemList();
     private:
         // maps the item's name to its json structure
-        unordered_map<int, Document*> contents;
+        unordered_map<int, shared_ptr<Document> > contents;
         map<string, int> genre_n;
         // maps a field of the features to its possible values
         // (one hot encoding)
