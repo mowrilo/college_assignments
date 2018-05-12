@@ -26,13 +26,13 @@ vector<double> ItemList::get_vector(string &item_name){
 void ItemList::parse_item(string &item_json){
     string item_name = item_json.substr(0,8);
     int item_n = get_item_number(item_name);
-    item_json.substr(9);
+    item_json = item_json.substr(9);
     //cout << "Item json: "<< item_json << "\n";
     shared_ptr<Document> doc(new Document);
     //Document doc;
     (*doc).Parse(item_json.c_str());// parse a DOM tree
     unordered_map<int, shared_ptr<Document> >::iterator it = contents.find(item_n);
-    if (it != contents.end()){
+    if (it == contents.end()){
         contents.insert({item_n, doc});
     }
     Value& res = (*doc)["Response"];
@@ -93,6 +93,7 @@ void ItemList::parse_item(string &item_json){
             }
         }
     }
+    //cout << "Done!\n";
     //for (unordered_map<string,set<string> >::iterator it_pos = possible_values.begin(); it_pos != possible_values.end(); it_pos++){
     //    if (it_pos->first.compare("Genre")){
     //        Value& s = (*doc)["Genre"];
@@ -123,22 +124,23 @@ void ItemList::read_contents(string &filename){
     string line;
     getline(f,line);
     while(getline(f,line)){
-       string item_name = line.substr(0,8);
+       //string item_name = line.substr(0,8);
        //cout << "Item: " << item_name << "\n";
-       int item_n = get_item_number(item_name);
-       string item_json = line.substr(9);
+       //int item_n = get_item_number(item_name);
+       //string item_json = line.substr(9);
        //cout << "Json: " << item_json << "\n";
-       parse_item(item_json);
+       parse_item(line);
     }
-    cout << "::Statistics:\n\tPossible genres: " << genre_n.size() << "\n\tPossible languages: " << language_n.size() << "\n\tPossible countries: " << country_n.size() << "\n\tMax year: " << max_yr << "\n\tMin year: " << min_yr << "\n";
+    //cout << "::Statistics:\n\tPossible genres: " << genre_n.size() << "\n\tPossible languages: " << language_n.size() << "\n\tPossible countries: " << country_n.size() << "\n\tMax year: " << max_yr << "\n\tMin year: " << min_yr << "\n";
     get_vector_names();
+    compute_all_vectors();
 }
 
 void ItemList::get_vector_names(){
     // get thresholds
-    int genre_th = 1;
-    int language_th = 500;
-    int country_th = 1000;
+    int genre_th = 20;
+    int language_th = 1500;
+    int country_th = 1500;
     // loop through genres
     int n_pos = 0;
     for (unordered_map<string,int>::iterator it = genre_n.begin(); it != genre_n.end(); it++){
@@ -163,36 +165,53 @@ void ItemList::get_vector_names(){
     }
 
     this->n_positions = n_pos;
-    cout << "Positions: " << n_pos << "\n\n";
-    for (map<string,int>::iterator asd=value_to_position.begin(); asd!=value_to_position.end(); asd++){
-        cout << "Field: " << asd->first << "\t\tPosition: " << asd->second << "\n";
+    //cout << "Positions: " << n_pos << "\n\n";
+    //for (map<string,int>::iterator asd=value_to_position.begin(); asd!=value_to_position.end(); asd++){
+    //    cout << "Field: " << asd->first << "\t\tPosition: " << asd->second << "\n";
+    //}
+}
+
+vector<double> ItemList::get_vector(int item_num){
+    unordered_map<int, vector<double> >::iterator it_feat = features.find(item_num);
+    if (it_feat != features.end()){
+        return it_feat->second;
     }
+    vector<double> empty;
+    return empty;
 }
 
 // gets the item number, retrieves its doc and builds 
 // its feature vector. concatenates the one-hot vectors
 // starting with the greatest. if the vector is already
 // computed, it retrieves it.
-vector<double> ItemList::compute_vector(string &item_name){
-    int item_num = get_item_number(item_name);
-    unordered_map<int, vector<double> >::iterator it_feat = features.find(item_num);
-    if (it_feat != features.end()){
-        return it_feat->second;
-    }
+vector<double> ItemList::compute_vector(int item_num){//string &item_name){
+    //int item_num = get_item_number(item_name); 
+    //cout << "Preprocessing...\n";
     unordered_map<int, shared_ptr<Document> >::iterator it = contents.find(item_num); 
     shared_ptr<Document> doc = it->second;
-    //doc = make_shared<Document>(it->second);
-    vector<double> vec(this->n_positions);
-    Value& s = (*doc)["Genre"];
+    ////doc = make_shared<Document>(it->second);
+    vector<double> vec(this->n_positions,0.0);
+    //cout << "Npos: " << this->n_positions << "\n";
+    Value& s = (*doc)["Response"];
     string val = s.GetString();
+    if (val.compare("False") == 0){
+        vector<double> empty;
+        return empty;
+    }
+
+    s = (*doc)["Genre"];
+    val = s.GetString();
     vector<string> vals = split_comma(val);
     int is_other = 1;
     for (vector<string>::iterator vals_it=vals.begin(); vals_it != vals.end(); vals_it++){
         map<string,int>::iterator pos_it = value_to_position.find(*vals_it);
+    //    cout << "Pos: " << pos_it->second << "\n";
+    //    cout << "vec size: " << vec.size() << "\n";
         if (pos_it != value_to_position.end()){
             is_other = 0;
             vec[pos_it->second] = 1;
         }
+        //else if ((*vals_it).compare("N/A"))
     }
     vec.push_back(is_other);
 
@@ -229,13 +248,27 @@ vector<double> ItemList::compute_vector(string &item_name){
     //s = (*doc)["Country"];
     //aux = get_onehot("Country", s.GetString());
     //vec.insert(vec.end(), aux.begin(), aux.end());
-    //s = (*doc)["Year"];
+    s = (*doc)["Year"];
     double year = parse_double(s.GetString());
-    vec.push_back((year - this->min_yr)/(this->max_yr - this->min_yr));
+    vec.push_back(14*(year - this->min_yr)/(this->max_yr - this->min_yr));
     s = (*doc)["imdbRating"];
     double rat = parse_double(s.GetString());
-    vec.push_back(rat/10);
+    vec.push_back(3.5*rat/10);
+    features.insert({item_num,vec});
     return vec;
+}
+
+void ItemList::compute_all_vectors(){
+    //cout << "Contents size: " << contents.size() << "\n";
+    for (unordered_map<int, shared_ptr<Document> >::iterator it = contents.begin(); it != contents.end(); it++){
+        //cout << "AROLDO!!\n";
+
+        //stringstream ss;
+        //ss << 'i';
+        //ss << setfill('0') << setw(7) << it->first;
+        //string item_name = ss.str();
+        vector<double> aux = compute_vector(it->first);
+    }
 }
 
 void ItemList::put_possible_values(vector<string> values, string &field){

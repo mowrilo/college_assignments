@@ -17,6 +17,7 @@
 #define ITEM_LIST
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <new>
@@ -40,7 +41,8 @@ class ItemList{
         vector<double> get_vector(string &item_name);
         // parses the item's json and saves in its content hash
         void parse_item(string &item_json);
-        vector<double> compute_vector(string &item_name);
+        vector<double> compute_vector(int item_num);//string &item_name);
+        vector<double> get_vector(int item_num);
         void put_possible_values(vector<string> values, string &field);
         //bool has_value(string &field, string &value);
         //void add_value(string &field, string &value);
@@ -48,6 +50,7 @@ class ItemList{
         vector<string> split_comma(string &all);
         vector<double> get_onehot(string field, string value);    
         void get_vector_names();
+        void compute_all_vectors();
         //~ItemList();
     private:
         // maps the item's name to its json structure

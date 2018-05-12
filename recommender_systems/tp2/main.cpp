@@ -4,19 +4,24 @@
 #include "rapidjson/document.h"
 #include "ItemList.hpp"
 #include "UserList.hpp"
+#include "Predictor.hpp"
 
 using namespace std;
 using namespace rapidjson;
 
 int main(){
     ios::sync_with_stdio(false);
-    ItemList list;
-    string filename = "data/content.csv";
+    //ItemList list;
+    //string filename = "data/content.csv";
     //list.read_contents(filename);
+    ////
+    //string filename2 = "data/ratings.csv";
+    //UserList ulist;
+    //ulist.read_ratings(filename2);
     //
-    string filename2 = "data/ratings.csv";
-    UserList ulist;
-    ulist.read_ratings(filename2);
+    //
+    Predictor p("data/ratings.csv","data/content.csv");
+    p.predict("data/targets.csv");
     //
     //
     //string all = "English, French, German, Portuguese";
