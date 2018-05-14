@@ -77,7 +77,6 @@ double Agent::calculate_weight(State &a){
 State Agent::state_to_expand(){
     State exp = queue.top();
     queue.pop();
-    //pair<int,int> coords_2 = exp.get_coordinates(); 
     return exp;
 }
 
@@ -91,7 +90,6 @@ pair<int,int> Agent::expand_state(State &a){
     visited_states.insert({this_numb,a});
     vector<pair<int,int> > neighbors = get_neighbors(coords);
     pair<int,int> gen_goal(-2,-2);
-    //cout << "New expand " << this_numb <<"\n";
     for (vector<pair<int,int> >::iterator it = neighbors.begin(); it != neighbors.end(); it++){
         if (*it == this->goal){
             gen_goal = *it;
@@ -109,25 +107,20 @@ pair<int,int> Agent::expand_state(State &a){
             State new_state(*it, coords, a.get_depth() + 1,a.get_cost()+dist); 
             double new_weight = calculate_weight(new_state);
             new_state.set_weight(new_weight);
-            //if (this->policy == 1){
-            //    //cout << "State: " << coords_2.first << " " << coords_2.second << " cost " << new_state.get_cost() << " from " << coords.first << " " << coords.second << " cost " << a.get_cost() <<"\n";
-            //    queue.push(new_state);
-            //}
-            //else{
-                if (it_front == frontier_costs.end()){
-                    queue.push(new_state);
-                    frontier_costs.insert({numb,new_weight});
-                }
-                else{
-                    if (new_weight < it_front->second){
+            if (it_front == frontier_costs.end()){
+                queue.push(new_state);
+                frontier_costs.insert({numb,new_weight});
+            }
+            else{
+                if (new_weight < it_front->second){
 
-                        if (this->policy % 2 == 0){
-                            queue.change_state(new_state);
-                        }
-                        it_front->second = new_weight;
+                    if (this->policy % 2 == 0){
+                        queue.change_state(new_state);
                     }
+                    it_front->second = new_weight;
                 }
-            //}
+            }
+            
         }
     }
     return gen_goal;
@@ -183,7 +176,6 @@ int Agent::search(int max_depth){
     bool reached_max_depth = false;
     pair<int,int> current_coords = current.get_coordinates();
     while (current_coords != this->goal){
-        //cout << "Max Depth " << max_depth << "\n";
         if (current.get_depth() < max_depth){
             pair<int,int> found_goal = expand_state(current);//expand current;
             if (found_goal.first >= 0){//depending on the algorithm, stop if generates goal;
@@ -210,9 +202,9 @@ int Agent::search(int max_depth){
         }
     }
 
-    //cout << "Total number of states expanded: " << visited_states.size() << "\n";
-
     stack<State> path = traceback(current);
+    // uncomment these lines to print the size of the structures
+    //cout << "Total number of states expanded: " << visited_states.size() << "\n";
     //cout << "Total number of states in path: " << path.size() << "\n";
     pair<int,int> goal_coords = current.get_coordinates();
     cout << "<" << init.first << ", " << init.second << ", 0>\n";
@@ -252,6 +244,7 @@ void Agent::start_search(){
         }
     }
     else{
+        // the maximum depth is infinity in practice.
         result = search(INT_MAX);
         if (result > 0){
             cout << "<" << init.first << ", " << init.second << ", 0>\n";

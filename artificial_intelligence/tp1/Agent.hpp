@@ -14,6 +14,7 @@
 #include "StateQueue.hpp"
 #include "State.hpp"
 
+// value to use for infinity
 #define INT_MAX 2147483647
 
 using namespace std;
