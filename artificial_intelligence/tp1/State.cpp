@@ -1,3 +1,6 @@
+// Trabalho Prático 1 - Inteligência Artificial (DCC028)
+// Autor: Murilo Vale Ferreira Menezes (2013030996)
+
 #include "State.hpp"
 
 using namespace std;

@@ -1,3 +1,6 @@
+// Trabalho Prático 1 - Inteligência Artificial (DCC028)
+// Autor: Murilo Vale Ferreira Menezes (2013030996)
+
 #ifndef AGENT_CLASS
 #define AGENT_CLASS
 
@@ -8,7 +11,7 @@
 #include <unordered_map>
 
 #include "Environment.hpp"
-#include "StateHeap.hpp"
+#include "StateQueue.hpp"
 #include "State.hpp"
 
 #define INT_MAX 2147483647
@@ -25,7 +28,6 @@ class Agent{
         vector<pair<int,int> > get_neighbors(pair<int,int> &coords);
         stack<State> traceback(State s); //traces back the path to the root
         int get_state_number(pair<int,int> &s);
-        //void set_env(Environment env);
         double get_heuristic(State &s);
         // search returns -1 if goal is found; returns the max depth reached otherwise
         int search(int max_depth);
@@ -46,7 +48,7 @@ class Agent{
         // The stack can be implemented using the 
         // depth of the node as weight.
         //priority_queue<State, deque<State> > queue;
-        StateHeap queue;
+        StateQueue queue;
         unordered_map<int,State> visited_states;
         unordered_map<int,double> frontier_costs;
         pair<int,int> init;

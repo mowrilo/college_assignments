@@ -1,3 +1,6 @@
+// Trabalho Prático 1 - Inteligência Artificial (DCC028)
+// Autor: Murilo Vale Ferreira Menezes (2013030996)
+
 #ifndef STATE_CLASS
 #define STATE_CLASS
 

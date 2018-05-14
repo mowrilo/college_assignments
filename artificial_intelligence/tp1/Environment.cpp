@@ -1,3 +1,6 @@
+// Trabalho Prático 1 - Inteligência Artificial (DCC028)
+// Autor: Murilo Vale Ferreira Menezes (2013030996)
+
 #include "Environment.hpp"
 
 Environment::Environment(){}
@@ -34,7 +37,6 @@ pair<int,int> Environment::convert_coordinates(int position){
 }
 
 char Environment::query_state(pair<int,int> coordinates){
-  //  pair<int,int> coordinates = convert_coordinates(position);
     int x = coordinates.first;
     int y = coordinates.second;
 
@@ -64,16 +66,16 @@ int Environment::get_width(){
 }
 
 void Environment::print_path(stack<State> &stack){
-    //cout << "Stack size: " << stack.size() << "\n";
 
-    //for (int i=0; i<stack.size(); i++){
     while(!stack.empty()){
         State a = stack.top();
         stack.pop();
         pair<int,int> coo = a.get_coordinates();
         cout << "<" << coo.first << ", " << coo.second << ", " << a.get_cost() << "> ";
-        grid[coo.first][coo.second] = '1';
+        // uncomment this section to print the map with the path
+        grid[coo.first][coo.second] = '0' + (a.get_depth()/100);
     }
+    cout << "\n";
     for (int i=0; i<height; i++){
         for (int j=0; j<width; j++){
             cout << grid[i][j];
