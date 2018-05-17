@@ -17,7 +17,7 @@ void Predictor::predict(string targets){
     ostringstream oss;
     oss << "UserId:ItemId,Prediction\n";
     string line;
-    int k = 17;
+    int k = 20;
     //double asd = i_list.get_avg_rating(210945);
     //cout << asd << "!!!!!\n";
     getline(iss,line);
@@ -30,7 +30,9 @@ void Predictor::predict(string targets){
         int user_n = u_list.get_user_number(user_name);
         vector<pair<int,int> > this_rat = u_list.get_user_rat(user_n);
         double prediction = 6;
-        double this_avg = i_list.get_avg_rating(item_n);
+        double teste = u_list.get_item_avg(item_n);
+        if (teste < 0) teste = 6.8;
+        double this_avg = i_list.get_avg_rating(item_n)*0.5 + 0.5*teste;
     //    cout << "avg: " << this_avg;
         if (this_avg < 0){
             prediction = 7.0;
@@ -50,7 +52,9 @@ void Predictor::predict(string targets){
                 prediction = 0;
                 double sum_sims = 0;
                 while(count < k){
-                    double that_avg = i_list.get_avg_rating(it_sims->second.first);
+                    teste = u_list.get_item_avg(it_sims->second.first);
+                    if (teste < 0) teste=6.8;
+                    double that_avg = i_list.get_avg_rating(it_sims->second.first)*0.5 + teste*0.5;
                     double sim = -it_sims->first;
                     sum_sims += sim;
                     double rat = (double) it_sims->second.second;
@@ -62,7 +66,7 @@ void Predictor::predict(string targets){
                 prediction/=sum_sims;
                 //cout << "Pred: " << prediction << "\n";
                 //if (this_avg > 0){
-                    prediction += this_avg;
+                prediction = this_avg;
                 //}
                 //else{
                 //    prediction += 7.2;
@@ -80,12 +84,14 @@ void Predictor::predict(string targets){
                     double sim = cosine_sim(it_rats->first, item_n);
                     double rat = (double) it_rats->second;
                     sum_sims += sim;
-                    double that_avg = i_list.get_avg_rating(it_rats->first);
+                    teste = u_list.get_item_avg(it_rats->first);
+                    if (teste < 0) teste=6.8;
+                    double that_avg = i_list.get_avg_rating(it_rats->first)*0.5 + teste*0.5;
                     prediction += sim*(rat - that_avg);
                 }
                 prediction/=sum_sims;
                 //if (this_avg > 0){
-                    prediction += this_avg;
+                    prediction = this_avg;
                 //}
                 //else{
                 //    prediction += 7.2;
