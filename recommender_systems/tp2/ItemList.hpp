@@ -51,6 +51,7 @@ class ItemList{
         vector<double> get_onehot(string field, string value);    
         void get_vector_names();
         void compute_all_vectors();
+        double get_avg_rating(int item_num);
         //~ItemList();
     private:
         // maps the item's name to its json structure
@@ -58,7 +59,9 @@ class ItemList{
         unordered_map<string, int> genre_n;
         unordered_map<string, int> language_n;
         unordered_map<string, int> country_n;
+        unordered_map<int, double> item_avgs;
         int n_positions;
+        pair<double,double> total_avg;
         map<string, int> value_to_position;
         int max_yr;
         int min_yr;

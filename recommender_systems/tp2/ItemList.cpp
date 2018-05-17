@@ -3,6 +3,8 @@
 ItemList::ItemList(){
     max_yr = 0;
     min_yr = 99999;
+    total_avg.first = 0;
+    total_avg.second = 0;
     //set<string> empty;
     //string test = "Genre";
     //possible_values.insert({test, empty});
@@ -45,6 +47,8 @@ void ItemList::parse_item(string &item_json){
 
         Value& cont_yr = (*doc)["Year"];
         double this_yr = parse_double(cont_yr.GetString());
+        //this_yr = (double) ((int) this_yr/10)*10;
+        //cout << "Year: " << this_yr << "\n";
         if (this_yr > this->max_yr){
             this->max_yr = this_yr;
         }
@@ -92,6 +96,12 @@ void ItemList::parse_item(string &item_json){
                 it_field->second++;
             }
         }
+        
+        Value& imdb_rat = (*doc)["imdbRating"];
+        double this_rat = parse_double(imdb_rat.GetString());
+        item_avgs.insert({item_n,this_rat});
+        total_avg.first += this_rat;
+        total_avg.second += 1;
     }
     //cout << "Done!\n";
     //for (unordered_map<string,set<string> >::iterator it_pos = possible_values.begin(); it_pos != possible_values.end(); it_pos++){
@@ -119,6 +129,15 @@ void ItemList::parse_item(string &item_json){
     //}
 }
 
+double ItemList::get_avg_rating(int item_num){
+    unordered_map<int,double>::iterator it = item_avgs.find(item_num);
+    if (it == item_avgs.end()){
+        
+        return total_avg.first/total_avg.second;
+    }
+    return it->second;
+}
+
 void ItemList::read_contents(string &filename){
     ifstream f(filename);
     string line;
@@ -138,9 +157,9 @@ void ItemList::read_contents(string &filename){
 
 void ItemList::get_vector_names(){
     // get thresholds
-    int genre_th = 20;
-    int language_th = 1500;
-    int country_th = 1500;
+    int genre_th = 1;
+    int language_th = 1;
+    int country_th = 1;
     // loop through genres
     int n_pos = 0;
     for (unordered_map<string,int>::iterator it = genre_n.begin(); it != genre_n.end(); it++){
@@ -241,19 +260,18 @@ vector<double> ItemList::compute_vector(int item_num){//string &item_name){
     }
     vec.push_back(is_other);
     
-    //vector<double> vec = get_onehot("Genre", s.GetString());
-    //s = (*doc)["Language"];
-    //vector<double> aux = get_onehot("Language", s.GetString());
-    //vec.insert(vec.end(), aux.begin(), aux.end());
-    //s = (*doc)["Country"];
-    //aux = get_onehot("Country", s.GetString());
-    //vec.insert(vec.end(), aux.begin(), aux.end());
     s = (*doc)["Year"];
     double year = parse_double(s.GetString());
-    vec.push_back(14*(year - this->min_yr)/(this->max_yr - this->min_yr));
-    s = (*doc)["imdbRating"];
-    double rat = parse_double(s.GetString());
-    vec.push_back(3.5*rat/10);
+    //year = (double) (((int) year/10)%100);
+    //if (year <= 1)  year += 100;
+    //year /= 10;
+    //double decade = 
+    vec.push_back((year - this->min_yr)/(this->max_yr - this->min_yr));
+    //s = (*doc)["imdbRating"];
+    //double rat = parse_double(s.GetString());
+
+    //vec.push_back(3.5*rat/10);
+    
     features.insert({item_num,vec});
     return vec;
 }
